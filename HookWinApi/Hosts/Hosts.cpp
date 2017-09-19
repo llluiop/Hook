@@ -11,11 +11,11 @@
 #include "ChildFrm.h"
 #include "HostsDoc.h"
 #include "HostsView.h"
-
+#include "mhook-lib/mhook.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
+#include <Shobjidl.h>
 
 // CHostsApp
 
@@ -28,8 +28,155 @@ BEGIN_MESSAGE_MAP(CHostsApp, CWinApp)
 	ON_COMMAND(ID_FILE_PRINT_SETUP, &CWinApp::OnFilePrintSetup)
 END_MESSAGE_MAP()
 
+typedef BOOL(WINAPI* _GetSaveFileNameA)(_Inout_ LPOPENFILENAME lpofn);
+typedef BOOL(WINAPI* _GetSaveFileNameW)(_Inout_ LPOPENFILENAME lpofn);
+
+_GetSaveFileNameA getsavefilenameA = nullptr;
+_GetSaveFileNameA getsavefilenameW = nullptr;
+
+UINT_PTR CALLBACK OFNHookProc(
+	_In_ HWND   hdlg,
+	_In_ UINT   uiMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam
+)
+{
+	return 0;
+}
+
+UINT_PTR CALLBACK OFNHookProcOldStyle(
+	_In_ HWND   hdlg,
+	_In_ UINT   uiMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam
+)
+{
+	return 0;
+}
+
+BOOL WINAPI MyGetSaveFileNameA(_Inout_ LPOPENFILENAME lpofn)
+{
+	if ((lpofn->Flags & OFN_EXPLORER) && (lpofn->Flags & OFN_ENABLEHOOK))
+	{
+		lpofn->lpfnHook = OFNHookProc;
+	}
+	else
+	{
+
+	}
+	return getsavefilenameA(lpofn);
+}
+
+BOOL WINAPI MyGetSaveFileNameW(_Inout_ LPOPENFILENAME lpofn)
+{
+	if ((lpofn->Flags & OFN_EXPLORER) && (lpofn->Flags & OFN_ENABLEHOOK))
+	{
+		lpofn->lpfnHook = OFNHookProc;
+	}
+	else
+	{
+
+	}
+	return getsavefilenameW(lpofn);
+}
+
+IFileDialog* pIFileDialog;
+IFileDialogEvents* pIFileDialogEvents;
+
+typedef HRESULT (STDMETHODCALLTYPE* _Show)(
+	IFileDialog* pIFileDialog,
+	_In_opt_  HWND hwndOwner);
+
+_Show show = nullptr;
+
+HRESULT STDMETHODCALLTYPE MyShow(
+	IFileDialog* pIFileDialog,
+	_In_opt_  HWND hwndOwner)
+{
+	DWORD cook;
+	pIFileDialog->Advise(pIFileDialogEvents, &cook);
+	return show(pIFileDialog, hwndOwner);
+}
+
+
+typedef HRESULT (STDMETHODCALLTYPE * _OnFileOk)(
+	__RPC__in IFileDialogEvents * This,
+	/* [in] */ __RPC__in_opt IFileDialog *pfd);
+
+_OnFileOk ok = nullptr;
+
+HRESULT STDMETHODCALLTYPE MyOnFileOK(
+	__RPC__in IFileDialogEvents * This,
+	/* [in] */ __RPC__in_opt IFileDialog *pfd)
+{
+	return ok(This, pfd);
+}
 
 // CHostsApp 构造
+
+
+class Event : public IFileDialogEvents
+{
+public:
+	virtual HRESULT STDMETHODCALLTYPE QueryInterface(
+		/* [in] */ REFIID riid,
+		/* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR *__RPC_FAR *ppvObject)
+	{
+		return S_OK;
+	};
+
+	virtual ULONG STDMETHODCALLTYPE AddRef(void)
+	{
+		return 1;
+	};
+
+	virtual ULONG STDMETHODCALLTYPE Release(void)
+	{
+		return 0;
+	};
+
+	virtual HRESULT STDMETHODCALLTYPE OnFileOk(
+		/* [in] */ __RPC__in_opt IFileDialog *pfd)
+	{
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE OnFolderChanging(
+		/* [in] */ __RPC__in_opt IFileDialog *pfd,
+		/* [in] */ __RPC__in_opt IShellItem *psiFolder)
+	{
+		return S_OK;
+	};
+
+	virtual HRESULT STDMETHODCALLTYPE OnFolderChange(
+		/* [in] */ __RPC__in_opt IFileDialog *pfd) {
+		return S_OK;
+	};
+
+	virtual HRESULT STDMETHODCALLTYPE OnSelectionChange(
+		/* [in] */ __RPC__in_opt IFileDialog *pfd) {
+		return S_OK;
+	};
+
+	virtual HRESULT STDMETHODCALLTYPE OnShareViolation(
+		/* [in] */ __RPC__in_opt IFileDialog *pfd,
+		/* [in] */ __RPC__in_opt IShellItem *psi,
+		/* [out] */ __RPC__out FDE_SHAREVIOLATION_RESPONSE *pResponse) {
+		return S_OK;
+	};
+
+	virtual HRESULT STDMETHODCALLTYPE OnTypeChange(
+		/* [in] */ __RPC__in_opt IFileDialog *pfd) {
+		return S_OK;
+	};
+
+	virtual HRESULT STDMETHODCALLTYPE OnOverwrite(
+		/* [in] */ __RPC__in_opt IFileDialog *pfd,
+		/* [in] */ __RPC__in_opt IShellItem *psi,
+		/* [out] */ __RPC__out FDE_OVERWRITE_RESPONSE *pResponse) {
+		return S_OK;
+	};
+};
 
 CHostsApp::CHostsApp()
 {
@@ -122,7 +269,41 @@ BOOL CHostsApp::InitInstance()
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
 
+	if (nullptr == GetModuleHandle(L"comdlg32.dll"))
+	{
+		LoadLibrary(L"comdlg32.dll");
+	}
+	
+	_GetSaveFileNameA getsavefilenameA = (_GetSaveFileNameA)
+		GetProcAddress(GetModuleHandle(L"comdlg32.dll"), "GetSaveFileNameA");
 
+	_GetSaveFileNameW getsavefilenameW = (_GetSaveFileNameW)
+		GetProcAddress(GetModuleHandle(L"comdlg32.dll"), "GetSaveFileNameW");
+
+	Mhook_SetHook((PVOID*)&getsavefilenameW, MyGetSaveFileNameW);
+	//Mhook_SetHook((PVOID*)&getsavefilenameA, MyGetSaveFileNameA);
+
+
+
+
+	HRESULT hr;
+
+	//USE_INTERFACE_PART_STD(FileDialogEvents);
+	//USE_INTERFACE_PART_STD(FileDialogControlEvents);
+
+
+	hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+			IID_PPV_ARGS(&pIFileDialog));
+
+
+	pIFileDialogEvents  = new Event;
+
+	//auto file = static_cast<IFileSaveDialog*>(pIFileDialog);
+	show = (_Show)*((int*)*(int*)pIFileDialog + 3);
+	Mhook_SetHook((PVOID*)&show, MyShow);
+
+	ok = (_OnFileOk)*((int*)*(int*)pIFileDialogEvents + 3);
+	Mhook_SetHook((PVOID*)&show, MyOnFileOK);
 
 	// 调度在命令行中指定的命令。  如果
 	// 用 /RegServer、/Register、/Unregserver 或 /Unregister 启动应用程序，则返回 FALSE。
