@@ -54,6 +54,9 @@
     <ClInclude Include="hook\winapi.h">
       <Filter>hook</Filter>
     </ClInclude>
+    <ClInclude Include="sync.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -77,11 +80,11 @@
     <ClCompile Include="hook\disasm-lib\misc.c">
       <Filter>hook\disasm</Filter>
     </ClCompile>
-    <ClCompile Include="sync.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="hook\winapi.cpp">
       <Filter>hook</Filter>
+    </ClCompile>
+    <ClCompile Include="sync.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

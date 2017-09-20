@@ -26,8 +26,8 @@ public:
 		);
 
 
-	static bool CreateFile();
-
+	static bool HookCreateFile();
+	static bool UnHookCreateFile();
 
 private:
 	static HANDLE WINAPI _CreateFileA(
