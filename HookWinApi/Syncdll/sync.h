@@ -7,8 +7,8 @@
 #define DLL_EXPORT __declspec(dllimport)
 #endif
 
-extern "C" DLL_EXPORT bool InstallHook(DWORD pid);
-extern "C" DLL_EXPORT bool UnInstallHook();
+extern "C" DLL_EXPORT bool Hook(DWORD pid);
+
 
 
 #endif

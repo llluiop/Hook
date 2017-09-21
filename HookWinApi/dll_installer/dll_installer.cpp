@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <ShlObj.h>
 #include <Windows.h>
-#include "../syncdll/sync.h"
+#include "../dll_loader/dll_loader.h"
 
 #pragma comment(linker,"/subsystem:\"Windows\" /entry:\"mainCRTStartup\"")
-#pragma comment(lib, "sync_dll.lib")
+#pragma comment(lib, "dll_loader.lib")
 
 
 
@@ -19,27 +19,10 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	//HMODULE injected_dll = LoadLibrary(L"sync_dll.dll");
-	//if (injected_dll ==  nullptr)
-	//{
-	//	return -1;
-	//}
+	InstallHook(atoi(argv[1]), "C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\sync_dll.dll");
 
-	//auto func = GetProcAddress(injected_dll, "sync");
-	//int remote_process_id = atoi(argv[1]);
-	//int remote_thread_id = GetThreadIDByProcssID(remote_process_id);
-	
-	if (0 == strcmp(argv[1], "-install"))
-	{
-		MessageBox(nullptr, L"install!", nullptr, MB_OK);
-		InstallHook(atoi(argv[2]));
-	}
-	else if (0 == strcmp(argv[1], "-uninstall"))
-	{
-		MessageBox(nullptr, L"uninstall!", nullptr, MB_OK);
-		UnInstallHook();
-	}
+    WaitForDllLoaded(atoi(argv[1]));
 
-    return 0;
+	return UnInstallHook();
 }
 

@@ -35,8 +35,11 @@ bool WinApiHook::HookCreateFile()
 
 bool WinApiHook::UnHookCreateFile()
 {
-	Mhook_Unhook((PVOID*)&create_file_a_);
-	Mhook_Unhook((PVOID*)&create_file_w_);
+	if (create_file_a_)
+		Mhook_Unhook((PVOID*)&create_file_a_);
+	
+	if (create_file_w_)
+		Mhook_Unhook((PVOID*)&create_file_w_);
 
 	return !!FreeLibrary(kernel32_);
 }
