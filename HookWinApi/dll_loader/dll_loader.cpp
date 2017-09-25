@@ -7,9 +7,11 @@
 #include <Windows.h>
 #include <mutex>
 #include <future>
+#include <vector>
 
 #pragma data_seg(".Shared")
-HANDLE g_sig = nullptr;
+//HANDLE g_sig = nullptr;
+char g_sig[512] = { 0 };
 char g_dll[260] = {0};
 #pragma data_seg()
 
@@ -19,9 +21,11 @@ extern HMODULE g_hModule;
 
 #pragma comment(linker,"/SECTION:.Shared,RWS")
 
-DWORD GetThreadIDByProcssID(DWORD pid)
+using namespace std;
+
+vector<DWORD> GetThreadIDByProcssID(DWORD pid)
 {
-	DWORD tid = 0;
+	vector<DWORD> tids;
 	THREADENTRY32 te32 = { sizeof(te32) };
 	HANDLE hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
 	if (Thread32First(hThreadSnap, &te32))
@@ -29,25 +33,23 @@ DWORD GetThreadIDByProcssID(DWORD pid)
 		do {
 			if (pid == te32.th32OwnerProcessID)
 			{
-				tid = te32.th32ThreadID;
-				break;
+				tids.push_back(te32.th32ThreadID);
 			}
 		} while (Thread32Next(hThreadSnap, &te32));
 	}
 
-	return tid;
+	return std::move(tids);
 }
 
-LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CallWndProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	std::call_once(g_flag, [] {
 		HMODULE module = ::LoadLibraryA(g_dll);
 
-		typedef bool(*Hook)();
-		Hook func = (Hook)GetProcAddress(module, "Hook");
+		auto func = GetProcAddress(module, "Hook");
 		std::async(std::launch::async, [&] {
 			if(func) func();
-			SetEvent(g_sig);
+			SetEvent(OpenEventA(SYNCHRONIZE, FALSE, g_sig));
 		});
 
 	});
@@ -58,22 +60,28 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 bool InstallHook(DWORD pid, char* target_dll)
 {
 	strncpy_s(g_dll, target_dll, 260);
+	sprintf_s(g_sig, "%d-%s", pid, target_dll);
 
-	DWORD tid = GetThreadIDByProcssID(pid);
-	if (pid == 0)
+	auto tids = GetThreadIDByProcssID(pid);
+	for (auto tid : tids)
 	{
-		return false;
+		g_hook = SetWindowsHookEx(WH_CALLWNDPROC, (HOOKPROC)CallWndProc, g_hModule, tid);
+		if (g_hook != nullptr)
+		{
+			break;
+		}
 	}
 	
-	g_hook = SetWindowsHookEx(WH_KEYBOARD, (HOOKPROC)KeyboardProc, g_hModule, tid);
 	if (g_hook == nullptr)
 	{
 		DWORD err = GetLastError();
 		return false;
 	}
 
-	MessageBox(nullptr, L"install hook suc!", nullptr, MB_OK);
-	g_sig = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (NULL == CreateEventA(nullptr, FALSE, FALSE, g_sig))
+	{
+		return false;
+	}
 
 	return true;
 }
