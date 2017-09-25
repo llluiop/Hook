@@ -5,9 +5,13 @@
 #include <stdlib.h>
 #include <ShlObj.h>
 #include <Windows.h>
+#include <iostream>
 #include "../dll_loader/dll_loader.h"
 
-#pragma comment(linker,"/subsystem:\"Windows\" /entry:\"mainCRTStartup\"")
+#ifndef _DEBUG
+	#pragma comment(linker,"/subsystem:\"Windows\" /entry:\"mainCRTStartup\"")
+#endif
+
 #pragma comment(lib, "dll_loader.lib")
 
 
@@ -19,9 +23,19 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	InstallHook(atoi(argv[1]), "C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\sync_dll.dll");
+	int target_process = atoi(argv[1]);
+#ifdef _DEBUG
+	std::cin >> target_process;
+#endif // DEBUG
 
-    WaitForDllLoaded(atoi(argv[1]));
+#ifdef _WIN64
+	InstallHook(target_process, "C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\x64\\Debug\\sync_dll.dll");
+#else
+	InstallHook(target_process, "C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\sync_dll.dll");
+#endif // _WIN64
+
+
+    WaitForDllLoaded(target_process);
 
 	return UnInstallHook();
 }

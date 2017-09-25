@@ -11,11 +11,12 @@
 
 #pragma data_seg(".Shared")
 //HANDLE g_sig = nullptr;
-char g_sig[512] = { 0 };
-char g_dll[260] = {0};
+char g_sig[MAX_PATH] = { 0 };
+char g_dll[MAX_PATH] = {0};
 #pragma data_seg()
 
 HHOOK g_hook;
+HANDLE g_event;
 std::once_flag g_flag;
 extern HMODULE g_hModule;
 
@@ -41,7 +42,7 @@ vector<DWORD> GetThreadIDByProcssID(DWORD pid)
 	return std::move(tids);
 }
 
-LRESULT CALLBACK CallWndProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	std::call_once(g_flag, [] {
 		HMODULE module = ::LoadLibraryA(g_dll);
@@ -49,23 +50,31 @@ LRESULT CALLBACK CallWndProc(int nCode, WPARAM wParam, LPARAM lParam)
 		auto func = GetProcAddress(module, "Hook");
 		std::async(std::launch::async, [&] {
 			if(func) func();
-			SetEvent(OpenEventA(SYNCHRONIZE, FALSE, g_sig));
+
+			SetEvent(OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig));
 		});
 
 	});
 	return ::CallNextHookEx(g_hook, nCode, wParam, lParam);
 }
 
+bool MakeEventName(DWORD pid, char* path)
+{
+	char name[64] = { 0 };
+	_splitpath_s(path, nullptr, 0, nullptr, 0, name, 64, nullptr, 0);
+	sprintf_s(g_sig, "Global\\%d-%s", pid, name);
+
+	return true;
+}
 
 bool InstallHook(DWORD pid, char* target_dll)
 {
-	strncpy_s(g_dll, target_dll, 260);
-	sprintf_s(g_sig, "%d-%s", pid, target_dll);
+	strncpy_s(g_dll, target_dll, MAX_PATH);
 
 	auto tids = GetThreadIDByProcssID(pid);
 	for (auto tid : tids)
 	{
-		g_hook = SetWindowsHookEx(WH_CALLWNDPROC, (HOOKPROC)CallWndProc, g_hModule, tid);
+		g_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)GetMsgProc, g_hModule, tid);
 		if (g_hook != nullptr)
 		{
 			break;
@@ -78,8 +87,12 @@ bool InstallHook(DWORD pid, char* target_dll)
 		return false;
 	}
 
-	if (NULL == CreateEventA(nullptr, FALSE, FALSE, g_sig))
+	MakeEventName(pid, target_dll);
+	g_event = CreateEventA(nullptr, FALSE, FALSE, g_sig);
+
+	if (NULL == g_event)
 	{
+		DWORD err = GetLastError();
 		return false;
 	}
 
@@ -96,7 +109,8 @@ bool WaitForDllLoaded(DWORD pid)
 		return false;
 	}
 
-	HANDLE events[2] = {g_sig, target_process};
+	HANDLE events[2] = {g_event, target_process};
+	//SetEvent(g_event);
 	return WAIT_OBJECT_0 ==  WaitForMultipleObjects(2, events, FALSE, INFINITE);
 }
 
