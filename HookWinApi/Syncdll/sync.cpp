@@ -5,11 +5,18 @@
 #include "sync.h"
 #include <Windows.h>
 #include "./hook/winapi.h"
+#include "./hook/wincom.h"
 
 
 bool Hook(DWORD pid)
 {
 	OutputDebugString(L"hook");
 	MessageBox(nullptr, L"HOOK!", nullptr, MB_OK);
-	return WinApiHook::HookCreateFile();
+	if(WinApiHook::HookCreateFile())
+		OutputDebugString(L"create hook");
+
+	if (WinComHook::HookSaveFileAs())
+		OutputDebugString(L"save as hook");
+
+	return true;
 }

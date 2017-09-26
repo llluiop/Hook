@@ -57,6 +57,9 @@
     <ClInclude Include="sync.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="hook\wincom.h">
+      <Filter>hook</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -85,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="sync.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hook\wincom.cpp">
+      <Filter>hook</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

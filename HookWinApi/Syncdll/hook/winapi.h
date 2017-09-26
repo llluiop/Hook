@@ -1,11 +1,12 @@
 #pragma once
 
 #include <Windows.h>
+#include <commdlg.h>
 
 class WinApiHook
 {
 public:
-	typedef HANDLE (WINAPI* CreateFileA_)(
+	typedef HANDLE (WINAPI* _CreateFileA)(
 			_In_ LPCSTR lpFileName,
 			_In_ DWORD dwDesiredAccess,
 			_In_ DWORD dwShareMode,
@@ -15,7 +16,7 @@ public:
 			_In_opt_ HANDLE hTemplateFile
 		);
 
-	typedef	HANDLE (WINAPI* CreateFileW_)(
+	typedef	HANDLE (WINAPI* _CreateFileW)(
 			_In_ LPCWSTR lpFileName,
 			_In_ DWORD dwDesiredAccess,
 			_In_ DWORD dwShareMode,
@@ -25,12 +26,18 @@ public:
 			_In_opt_ HANDLE hTemplateFile
 		);
 
+	typedef BOOL(WINAPI* _GetSaveFileNameA)(_Inout_ LPOPENFILENAME lpofn);
+	typedef BOOL(WINAPI* _GetSaveFileNameW)(_Inout_ LPOPENFILENAME lpofn);
+
 
 	static bool HookCreateFile();
 	static bool UnHookCreateFile();
 
+	static bool HookSaveFileAs();
+	static bool UnHookSaveFileAs();
+
 private:
-	static HANDLE WINAPI _CreateFileA(
+	static HANDLE WINAPI MyCreateFileA(
 		_In_ LPCSTR lpFileName,
 		_In_ DWORD dwDesiredAccess,
 		_In_ DWORD dwShareMode,
@@ -40,7 +47,7 @@ private:
 		_In_opt_ HANDLE hTemplateFile
 		);
 
-	static HANDLE WINAPI _CreateFileW(
+	static HANDLE WINAPI MyCreateFileW(
 		_In_ LPCWSTR lpFileName,
 		_In_ DWORD dwDesiredAccess,
 		_In_ DWORD dwShareMode,
@@ -50,8 +57,15 @@ private:
 		_In_opt_ HANDLE hTemplateFile
 		);
 
-	static CreateFileA_ create_file_a_;
-	static CreateFileW_ create_file_w_;
+	static BOOL WINAPI MyGetSaveFileNameA(_Inout_ LPOPENFILENAME lpofn);
+	static BOOL WINAPI MyGetSaveFileNameW(_Inout_ LPOPENFILENAME lpofn);
+
+	static _CreateFileA create_file_a_;
+	static _CreateFileW create_file_w_;
+
+	static _GetSaveFileNameA get_save_file_name_a_;
+	static _GetSaveFileNameW get_save_file_name_w_;
 
 	static HMODULE kernel32_;
+	static HMODULE comdlg_;
 };

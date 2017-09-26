@@ -110,7 +110,6 @@ bool WaitForDllLoaded(DWORD pid)
 	}
 
 	HANDLE events[2] = {g_event, target_process};
-	//SetEvent(g_event);
 	return WAIT_OBJECT_0 ==  WaitForMultipleObjects(2, events, FALSE, INFINITE);
 }
 
