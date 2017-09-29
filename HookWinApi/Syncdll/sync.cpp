@@ -12,11 +12,8 @@ bool Hook(DWORD pid)
 {
 	OutputDebugString(L"hook");
 	MessageBox(nullptr, L"HOOK!", nullptr, MB_OK);
-	if(WinApiHook::HookCreateFile())
-		OutputDebugString(L"create hook");
-
 	if (WinComHook::HookSaveFileAs())
-		OutputDebugString(L"save as hook");
+		OutputDebugString(L"save as hooked");
 
 	return true;
 }

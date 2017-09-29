@@ -22,6 +22,9 @@
     <Filter Include="hook\disasm">
       <UniqueIdentifier>{3e792c39-8001-40ea-ae58-763e18e9e975}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hook\asm">
+      <UniqueIdentifier>{2b88240f-bbf9-4c6b-b6f6-b7599364ff8c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -60,6 +63,9 @@
     <ClInclude Include="hook\wincom.h">
       <Filter>hook</Filter>
     </ClInclude>
+    <ClInclude Include="hook\asm\cocreateinstance.h">
+      <Filter>hook\asm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -92,5 +98,10 @@
     <ClCompile Include="hook\wincom.cpp">
       <Filter>hook</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="hook\asm\cocreateinstance.asm">
+      <Filter>hook\asm</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

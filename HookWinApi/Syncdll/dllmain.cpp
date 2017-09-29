@@ -23,7 +23,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		OutputDebugString(L"thread detach");
 		break;
 	case DLL_PROCESS_DETACH:
-		WinApiHook::UnHookCreateFile();
 		OutputDebugString(L"process detach");
 		MessageBox(nullptr, L"UNHOOK!", nullptr, MB_OK);
 		break;
