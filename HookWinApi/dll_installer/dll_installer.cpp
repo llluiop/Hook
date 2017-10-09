@@ -23,9 +23,10 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	int target_process = atoi(argv[1]);
+	DWORD target_process = atoi(argv[1]);
 #ifdef _DEBUG
-	std::cin >> target_process;
+	GetWindowThreadProcessId(FindWindowA("Notepad++", "new 1 - Notepad++"), &target_process);
+	//std::cin >> target_process;
 #endif // DEBUG
 
 #ifdef _WIN64

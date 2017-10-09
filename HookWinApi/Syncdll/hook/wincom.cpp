@@ -66,10 +66,12 @@ bool pure(const T addr)
 }
 bool WinComHook::HookSaveFileAs()
 {
-	return true;
-	auto h = CoInitialize(nullptr); return true;
-	HRESULT hr;
-	auto t = CoCreateInstance;
+	HRESULT hr = CoInitialize(nullptr);
+	if (hr != S_OK)
+	{
+		return false;
+	}
+
 	if (!pure(CoCreateInstance))
 	{
 		hr = PureCoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
@@ -88,14 +90,7 @@ bool WinComHook::HookSaveFileAs()
 	}
 
 	show_ = (_Show)*((DWORD*)*(DWORD*)iFileDialog_ + 3);
-	if (show_)
-	{
-		//return !!Mhook_SetHook((PVOID*)&show_, MyShow);
-	}
-	else
-	{
-		return false;
-	}
+	return !!Mhook_SetHook((PVOID*)&show_, MyShow);
 }
 
 bool WinComHook::UnHookSaveFileAs()
@@ -104,6 +99,8 @@ bool WinComHook::UnHookSaveFileAs()
 	{
 		Mhook_Unhook((PVOID*)&show_);
 	}
+
+	CoUninitialize();
 
 	return true;
 }

@@ -1,6 +1,8 @@
 // dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "stdafx.h"
 #include "./hook/winapi.h"
+#include "./hook/wincom.h"
+#include <future>
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -14,7 +16,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	     //https://msdn.microsoft.com/en-us/library/windows/desktop/dn633971(v=vs.85).aspx
 		//OutputDebugString(L"process attach");
 		//MessageBox(nullptr, L"HOOK!", nullptr, MB_OK);
-		//WinApiHook::HookCreateFile();
+		std::async(std::launch::async, [] {
+			WinApiHook::HookSaveFileAs();
+			WinComHook::HookSaveFileAs();
+		});
 		break;
 	case DLL_THREAD_ATTACH:
 		OutputDebugString(L"thread attach");
@@ -24,7 +29,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		break;
 	case DLL_PROCESS_DETACH:
 		OutputDebugString(L"process detach");
-		MessageBox(nullptr, L"UNHOOK!", nullptr, MB_OK);
+		//MessageBox(nullptr, L"UNHOOK!", nullptr, MB_OK);
 		break;
 	}
 	return TRUE;

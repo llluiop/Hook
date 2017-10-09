@@ -45,15 +45,8 @@ vector<DWORD> GetThreadIDByProcssID(DWORD pid)
 LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	std::call_once(g_flag, [] {
-		HMODULE module = ::LoadLibraryA(g_dll);
-
-		auto func = GetProcAddress(module, "Hook");
-		std::async(std::launch::async, [&] {
-			if(func) func();
-
-			SetEvent(OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig));
-		});
-
+		::LoadLibraryA(g_dll);
+		SetEvent(OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig));
 	});
 	return ::CallNextHookEx(g_hook, nCode, wParam, lParam);
 }
