@@ -8,15 +8,14 @@ WinComHook::_Show WinComHook::show_ = nullptr;
 
 HRESULT WinComHook::MyShow(IFileDialog * pIFileDialog, HWND hwndOwner)
 {
-	return S_FALSE;
+	IFileSaveDialog *New_pointer = dynamic_cast<IFileSaveDialog *>(pIFileDialog);
+	if (NULL != New_pointer)
+	{
+		return S_FALSE;
+	}
+	return show_(pIFileDialog, hwndOwner);
 }
-#pragma pack(push, 1)
-struct Thunk
-{
-	BYTE jump;
-	DWORD real;
-};
-#pragma pack(pop)
+
 
 #ifndef _WIN64
 __declspec(naked) void Calc()

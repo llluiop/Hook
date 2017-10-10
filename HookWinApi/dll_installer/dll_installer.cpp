@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 
 	DWORD target_process = atoi(argv[1]);
 #ifdef _DEBUG
-	GetWindowThreadProcessId(FindWindowA("Notepad++", "new 1 - Notepad++"), &target_process);
+	GetWindowThreadProcessId(FindWindowA("OpusApp", "Word"), &target_process);
 	//std::cin >> target_process;
 #endif // DEBUG
 
