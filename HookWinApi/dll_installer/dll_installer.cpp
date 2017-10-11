@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 	DWORD target_process = atoi(argv[1]);
 #ifdef _DEBUG
 	GetWindowThreadProcessId(FindWindowA("OpusApp", "ÐÂ½¨ Microsoft Word ÎÄµµ.docx - Word"), &target_process);
-	target_process = 2956;
+	target_process = 10572;
 	//std::cin >> target_process;
 #endif // DEBUG
 

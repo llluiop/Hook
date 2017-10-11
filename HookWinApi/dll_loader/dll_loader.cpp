@@ -24,6 +24,274 @@ extern HMODULE g_hModule;
 
 using namespace std;
 
+
+HRESULT CreateQSecDescriptor(
+)
+{
+
+
+	HANDLE hToken = NULL;
+	DWORD dwBufferSize = 0;
+	PTOKEN_USER pTokenUser = NULL;
+	PSID pEveryoneSid = NULL;
+	PSID pTrustedUserSid = NULL;
+	PACL pDacl = NULL;
+	DWORD cbDacl = 0;
+	SECURITY_DESCRIPTOR sd;
+	DWORD dwErrorCode = 0;
+	HRESULT hr = S_FALSE;
+
+	// Open the access token associated with the calling process.  
+	if (OpenProcessToken(
+		GetCurrentProcess(),
+		TOKEN_QUERY,
+		&hToken
+	) == FALSE)
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"OpenProcessToken failed. GetLastError returned: %d\n", dwErrorCode);
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	// Retrieve the token information in a TOKEN_USER structure.  
+	GetTokenInformation(
+		hToken,
+		TokenUser,      // Request for a TOKEN_USER structure.  
+		NULL,
+		0,
+		&dwBufferSize
+	);
+
+	pTokenUser = (PTOKEN_USER) new BYTE[dwBufferSize];
+	memset(pTokenUser, 0, dwBufferSize);
+	if (GetTokenInformation(hToken,
+		TokenUser,
+		pTokenUser,
+		dwBufferSize,
+		&dwBufferSize
+	))
+	{
+		CloseHandle(hToken);
+	}
+	else
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"GetTokenInformation failed. GetLastError returned: %d\n", dwErrorCode);
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	if (IsValidSid(pTokenUser->User.Sid) == FALSE)
+	{
+		wprintf(L"The owner SID is invalid.\n");
+		delete[] pTokenUser;
+		return S_FALSE;
+	}
+
+	// Retrieve the SID of the Everyone group.  
+	SID_IDENTIFIER_AUTHORITY WorldAuth = SECURITY_WORLD_SID_AUTHORITY;
+	if (AllocateAndInitializeSid(
+		&WorldAuth,          // Top-level SID authority  
+		1,                   // Number of subauthorities  
+		SECURITY_WORLD_RID,  // Subauthority value  
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		&pEveryoneSid        // SID returned as OUT parameter  
+	) == FALSE)
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"AllocateAndInitializeSid failed. GetLastError returned: %d\n", dwErrorCode);
+		delete[] pTokenUser;
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	// Retrieve the SID of the trusted user.  
+	//hr = GetSid(wszUserName, &pTrustedUserSid);
+	//if (FAILED(hr))
+	//{
+	//	wprintf(L"GetSid failed. Error code: 0x%X\n", hr);
+	//	delete[] pTokenUser;
+	//	FreeSid(pEveryoneSid);
+	//	return hr;
+	//}
+
+	// Calculate the amount of memory that must be allocated for the DACL.  
+	cbDacl = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) * 2 - sizeof(DWORD) * 2;
+	cbDacl += GetLengthSid(pTokenUser->User.Sid);
+	cbDacl += GetLengthSid(pEveryoneSid);
+	//cbDacl += GetLengthSid(pTrustedUserSid);
+
+	// Create and initialize an ACL.  
+	pDacl = (PACL) new BYTE[cbDacl];
+	if (pDacl == NULL)
+	{
+		delete[] pTokenUser;
+		FreeSid(pEveryoneSid);
+		//FreeSid(pTrustedUserSid);
+		return S_FALSE;
+	}
+	memset(pDacl, 0, cbDacl);
+	if (InitializeAcl(
+		pDacl,
+		cbDacl,
+		ACL_REVISION  // Required constant  
+	) == FALSE)
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"InitializeAcl failed. GetLastError returned: %d\n", dwErrorCode);
+		delete[] pTokenUser;
+		FreeSid(pEveryoneSid);
+		//FreeSid(pTrustedUserSid);
+		delete[] pDacl;
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	// Add access-allowed ACEs for the three trustees.  
+	if (AddAccessAllowedAce(
+		pDacl,                    // Pointer to the ACL.  
+		ACL_REVISION,             // Required constant  
+		GENERIC_ALL,  // Access mask  
+		pTokenUser->User.Sid      // Pointer to the trustee's SID  
+	) == FALSE)
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"AddAccessAllowedAce failed for the queue owner. GetLastError returned: %d\n", dwErrorCode);
+		delete[] pTokenUser;
+		FreeSid(pEveryoneSid);
+		//FreeSid(pTrustedUserSid);
+		delete[] pDacl;
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	if (AddAccessAllowedAce(
+		pDacl,                     // Pointer to the ACL  
+		ACL_REVISION,              // Required constant  
+		GENERIC_ALL,  // Access mask  
+		pEveryoneSid               // Pointer to the trustee's SID  
+	) == FALSE)
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"AddAccessAllowedAce failed for the Everyone group. GetLastError returned: %d\n", dwErrorCode);
+		delete[] pTokenUser;
+		FreeSid(pEveryoneSid);
+		//FreeSid(pTrustedUserSid);
+		delete[] pDacl;
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	//if (AddAccessAllowedAce(
+	//	pDacl,                    // Pointer to the ACL structure  
+	//	ACL_REVISION,             // Required constant  
+	//	GENERIC_ALL,  // Access mask  
+	//	pTrustedUserSid           // Pointer to the trustee's SID  
+	//) == FALSE)
+	//{
+	//	dwErrorCode = GetLastError();
+	//	wprintf(L"AddAccessAllowedAce failed for the trusted owner. GetLastError returned: %d\n", dwErrorCode);
+	//	delete[] pTokenUser;
+	//	FreeSid(pEveryoneSid);
+	//	FreeSid(pTrustedUserSid);
+	//	delete[] pDacl;
+	//	return HRESULT_FROM_WIN32(dwErrorCode);
+	//}
+
+	// Initialize an absolute SECURITY_DESCRIPTOR structure.  
+	if (InitializeSecurityDescriptor(
+		&sd,
+		SECURITY_DESCRIPTOR_REVISION  // Required constant  
+	) == FALSE)
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"InitializeSecurityDescriptor failed. GetLastError returned: %d\n", dwErrorCode);
+		delete[] pTokenUser;
+		FreeSid(pEveryoneSid);
+		FreeSid(pTrustedUserSid);
+		delete[] pDacl;
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	// Insert the DACL into the absolute SECURITY_DESCRIPTOR structure.  
+	if (SetSecurityDescriptorDacl(
+		&sd,
+		TRUE,
+		pDacl,
+		FALSE
+	) == FALSE)
+	{
+		dwErrorCode = GetLastError();
+		wprintf(L"SetSecurityDescriptorDacl failed. GetLastError returned: %d\n", dwErrorCode);
+		delete[] pTokenUser;
+		FreeSid(pEveryoneSid);
+		FreeSid(pTrustedUserSid);
+		delete[] pDacl;
+		return HRESULT_FROM_WIN32(dwErrorCode);
+	}
+
+	SECURITY_ATTRIBUTES securityAttr;
+	// set SECURITY_ATTRIBUTES
+	securityAttr.nLength = sizeof SECURITY_ATTRIBUTES;
+	securityAttr.bInheritHandle = FALSE;
+	securityAttr.lpSecurityDescriptor = &sd;
+
+	g_event = CreateEventA(&securityAttr, FALSE, FALSE, g_sig);
+
+	// Create a queue using the absolute SECURITY_DESCRIPTOR structure.  
+	//hr = CreateMSMQQueue(
+	//	wszPathName,
+	//	&sd,
+	//	wszOutFormatName,
+	//	pdwOutFormatNameLength
+	//);
+	//if (FAILED(hr))
+	//{
+	//	wprintf(L"CreateMSMQQueue returned 0x%X\n", hr);
+	//}
+
+	delete[] pTokenUser;
+	FreeSid(pEveryoneSid);
+	//FreeSid(pTrustedUserSid);
+	delete[] pDacl;
+	return hr;
+}
+
+#include <oledb.h>
+#include <Sddl.h>
+#include <Aclapi.h>
+bool SetObjectToLowIntegrity(
+	HANDLE hObject, SE_OBJECT_TYPE type = SE_KERNEL_OBJECT)
+{
+
+	LPCWSTR LOW_INTEGRITY_SDDL_SACL = L"S:(ML;;NW;;;LW)";
+	bool bRet = false;
+	DWORD dwErr = ERROR_SUCCESS;
+	PSECURITY_DESCRIPTOR pSD = NULL;
+	PACL pSacl = NULL;
+	BOOL fSaclPresent = FALSE;
+	BOOL fSaclDefaulted = FALSE;
+
+	if (ConvertStringSecurityDescriptorToSecurityDescriptor(
+		LOW_INTEGRITY_SDDL_SACL, SDDL_REVISION_1, &pSD, NULL))
+	{
+		if (GetSecurityDescriptorSacl(
+			pSD, &fSaclPresent, &pSacl, &fSaclDefaulted))
+		{
+			dwErr = SetSecurityInfo(
+				hObject, type, LABEL_SECURITY_INFORMATION,
+				NULL, NULL, NULL, pSacl);
+
+			bRet = (ERROR_SUCCESS == dwErr);
+		}
+
+		LocalFree(pSD);
+	}
+
+	return bRet;
+}
+
 vector<DWORD> GetThreadIDByProcssID(DWORD pid)
 {
 	vector<DWORD> tids;
@@ -46,7 +314,16 @@ LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	std::call_once(g_flag, [] {
 		::LoadLibraryA(g_dll);
-		SetEvent(OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig));
+		HANDLE h = OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig);
+		//if (h == nullptr)
+		//{
+			auto d = GetLastError();
+		//}
+		auto b = SetEvent(h);
+		if (b == FALSE)
+		{
+			auto d = GetLastError();
+		}
 	});
 	return ::CallNextHookEx(g_hook, nCode, wParam, lParam);
 }
@@ -67,7 +344,7 @@ bool InstallHook(DWORD pid, char* target_dll)
 	auto tids = GetThreadIDByProcssID(pid);
 	for (auto tid : tids)
 	{
-		g_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)GetMsgProc, g_hModule, tid);
+		g_hook = SetWindowsHookEx(WH_MOUSE, (HOOKPROC)GetMsgProc, g_hModule, tid);
 		if (g_hook != nullptr)
 		{
 			break;
@@ -81,8 +358,20 @@ bool InstallHook(DWORD pid, char* target_dll)
 	}
 
 	MakeEventName(pid, target_dll);
-	g_event = CreateEventA(nullptr, FALSE, FALSE, g_sig);
 
+	SECURITY_DESCRIPTOR secutityDese;
+	::InitializeSecurityDescriptor(&secutityDese, SECURITY_DESCRIPTOR_REVISION);
+	::SetSecurityDescriptorDacl(&secutityDese, TRUE, NULL, FALSE);
+	SECURITY_ATTRIBUTES securityAttr;
+	// set SECURITY_ATTRIBUTES
+	securityAttr.nLength = sizeof SECURITY_ATTRIBUTES;
+	securityAttr.bInheritHandle = FALSE;
+	securityAttr.lpSecurityDescriptor = &secutityDese;
+
+
+	g_event = CreateEventA(&securityAttr, FALSE, FALSE, g_sig);
+	SetObjectToLowIntegrity(g_event);
+	//CreateQSecDescriptor();
 	if (NULL == g_event)
 	{
 		DWORD err = GetLastError();
