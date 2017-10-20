@@ -81,16 +81,8 @@ LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	std::call_once(g_flag, [] {
 		::LoadLibraryA(g_dll);
-		HANDLE h = OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig);
-		//if (h == nullptr)
-		//{
-			auto d = GetLastError();
-		//}
-		auto b = SetEvent(h);
-		if (b == FALSE)
-		{
-			auto d = GetLastError();
-		}
+		OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig);
+
 	});
 	return ::CallNextHookEx(g_hook, nCode, wParam, lParam);
 }
