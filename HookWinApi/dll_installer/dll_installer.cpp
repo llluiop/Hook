@@ -8,36 +8,46 @@
 #include <iostream>
 #include "../dll_loader/dll_loader.h"
 
-#ifndef _DEBUG
+#ifndef _TEST
 	#pragma comment(linker,"/subsystem:\"Windows\" /entry:\"mainCRTStartup\"")
 #endif
 
 #pragma comment(lib, "dll_loader.lib")
 
+std::string get_path()
+{
+	char cWinDir[MAX_PATH] = { 0 };
+	GetModuleFileNameA(nullptr, cWinDir, MAX_PATH);
+	(strrchr(cWinDir, ('\\')))[1] = 0;
 
+	std::string path(cWinDir);
+	path.append("sync_dll.dll");
+
+	return path;
+}
 
 int main(int argc, char* argv[])
 {
-	if (argc <= 1 || argv[1] == nullptr)
+	if (argc <= 2 || argv[1] == nullptr)
 	{
 		return -1;
 	}
 
-	DWORD target_process = atoi(argv[1]);
-#ifdef _DEBUG
-	GetWindowThreadProcessId(FindWindowA("OpusApp", "新建 Microsoft Word 文档.docx - Word"), &target_process);
-	target_process = 10572;
+
+	DWORD target_process_id = atoi(argv[1]);
+	std::string target_process_name(argv[2]);
+
+#ifdef _TEST
+	GetWindowThreadProcessId(FindWindowA("OpusApp", "新建 Microsoft Word 文档.docx - Word"), &target_process_id);
+	target_process_id = 10572;
 	//std::cin >> target_process;
-#endif // DEBUG
+#endif // 
 
-#ifdef _WIN64
-	InstallHook(target_process, "C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\x64\\Debug\\sync_dll.dll");
-#else
-	InstallHook(target_process, "C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\sync_dll.dll");
-#endif // _WIN64
+	auto dll_path = get_path();
+	if (!InstallHook(target_process_id, dll_path.c_str()))
+		return false;
 
-
-    WaitForDllLoaded(target_process);
+    WaitForDllLoaded(target_process_id);
 
 	return UnInstallHook();
 }

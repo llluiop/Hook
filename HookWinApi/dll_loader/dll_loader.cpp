@@ -87,7 +87,7 @@ LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 	return ::CallNextHookEx(g_hook, nCode, wParam, lParam);
 }
 
-bool MakeEventName(DWORD pid, char* path)
+bool MakeEventName(DWORD pid, const char* path)
 {
 	char name[64] = { 0 };
 	_splitpath_s(path, nullptr, 0, nullptr, 0, name, 64, nullptr, 0);
@@ -96,15 +96,9 @@ bool MakeEventName(DWORD pid, char* path)
 	return true;
 }
 
-bool InstallHook(DWORD pid, char* target_dll)
+bool InstallHook(DWORD pid, const char* target_dll)
 {
 	strncpy_s(g_dll, target_dll, MAX_PATH);
-
-	if (g_hook == nullptr)
-	{
-		DWORD err = GetLastError();
-		return false;
-	}
 
 	MakeEventName(pid, target_dll);
 
@@ -136,7 +130,7 @@ bool InstallHook(DWORD pid, char* target_dll)
 		}
 	}
 	
-	return true;
+	return g_hook != nullptr;
 }
 
 

@@ -16,7 +16,7 @@
 // Parameter: DWORD pid
 // Parameter: char * target_dll
 //************************************
-extern "C" DLL_EXPORT bool InstallHook(DWORD pid, char* target_dll);
+extern "C" DLL_EXPORT bool InstallHook(DWORD pid, const char* target_dll);
 
 //************************************
 // Method:    WaitForDllLoaded
