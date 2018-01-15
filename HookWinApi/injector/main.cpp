@@ -1,15 +1,19 @@
 #include <stdio.h>
 #include <Windows.h>
 #include <string>
+#include <iostream>
+
 int main()
 {
+	std::cout << sizeof(DWORD) << " " << sizeof(DWORD*);
+
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 
 	ZeroMemory(&si, sizeof(si));
 	ZeroMemory(&pi, sizeof(pi));
 
-	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\dll_installer.exe 16960");
+	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\dll_installer.exe 876 TEST");
 	//创建一个新进程  
 	if (CreateProcess(
 		NULL,   //  指向一个NULL结尾的、用来指定可执行模块的宽字节字符串  
@@ -33,6 +37,7 @@ int main()
 	else {
 		auto err = GetLastError();
 	}
+
 
 	return getchar();
 }

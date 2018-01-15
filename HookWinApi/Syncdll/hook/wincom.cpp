@@ -1,17 +1,37 @@
 #include "wincom.h"
 #include "mhook-lib/mhook.h"
 #include "asm/cocreateinstance.h"
-
+#include <typeinfo>
 
 IFileDialog* WinComHook::iFileDialog_ = nullptr;
 WinComHook::_Show WinComHook::show_ = nullptr;
 
 HRESULT WinComHook::MyShow(IFileDialog * pIFileDialog, HWND hwndOwner)
 {
-	IFileSaveDialog *New_pointer = dynamic_cast<IFileSaveDialog *>(pIFileDialog);
-	if (NULL != New_pointer)
+	TCHAR* buff = nullptr;
+	auto file = pIFileDialog->GetFileName(&buff);
+
+	IFileSaveDialog* pCustom = nullptr;
+	auto hr = pIFileDialog->QueryInterface(IID_IFileSaveDialog,
+		reinterpret_cast<void**>(&pCustom));
+	if (SUCCEEDED(hr))
 	{
-		return S_FALSE;
+
+	}
+
+	auto name = typeid(pIFileDialog).name();
+	pIFileDialog->SetTitle(L"test");
+	try
+	{
+		//IFileSaveDialog *New_pointer = dynamic_cast<IFileSaveDialog *>(pIFileDialog);
+	}
+	catch (const std::bad_alloc&)
+	{
+
+	}
+	//if (NULL != New_pointer)
+	{
+	//	return S_FALSE;
 	}
 	return show_(pIFileDialog, hwndOwner);
 }
@@ -70,7 +90,7 @@ bool WinComHook::HookSaveFileAs()
 	{
 		return false;
 	}
-
+	MessageBox(0,0,0,0);
 	if (!pure(CoCreateInstance))
 	{
 		hr = PureCoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
@@ -88,7 +108,27 @@ bool WinComHook::HookSaveFileAs()
 		return false;
 	}
 
-	show_ = (_Show)*((DWORD*)*(DWORD*)iFileDialog_ + 3);
+	IFileSaveDialog* p = nullptr;
+	hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&p));
+
+	IFileSaveDialog* pCustom1 = nullptr;
+	hr = iFileDialog_->QueryInterface(IID_IFileSaveDialog,
+		reinterpret_cast<void**>(&pCustom1));
+	if (SUCCEEDED(hr))
+	{
+
+	}
+
+	IFileSaveDialog* pCustom2 = nullptr;
+	hr = p->QueryInterface(IID_IFileSaveDialog,
+		reinterpret_cast<void**>(&pCustom2));
+	if (SUCCEEDED(hr))
+	{
+
+	}
+
+	show_ = (_Show)*((DWORD_PTR*)*(DWORD_PTR*)iFileDialog_ + 3);
 	return !!Mhook_SetHook((PVOID*)&show_, MyShow);
 }
 
