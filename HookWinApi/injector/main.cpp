@@ -3,9 +3,52 @@
 #include <string>
 #include <iostream>
 
+class base
+{
+public:
+	virtual void A() = 0;
+	virtual void B() = 0;
+};
+
+class derive1 : public base
+{
+public:
+	virtual void A() = 0;
+	virtual void B() = 0;
+};
+
+class derive2 : public base
+{
+public:
+	virtual void A() = 0;
+	virtual void B() = 0;
+};
+
+class foo : public derive1, public derive2
+{
+public:
+	virtual void A()
+	{
+
+	}
+
+	virtual void B()
+	{
+
+	}
+};
+
 int main()
 {
-	std::cout << sizeof(DWORD) << " " << sizeof(DWORD*);
+	foo* b = new foo();
+	derive1* d = static_cast<derive1*>(b);
+	derive2* d2 = static_cast<derive2*>(b);
+
+#ifdef _WIN64
+	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\x64\\Debug\\dll_installer.exe 8376 TEST");
+#else
+	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\dll_installer.exe 7048 TEST");
+#endif
 
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -13,7 +56,6 @@ int main()
 	ZeroMemory(&si, sizeof(si));
 	ZeroMemory(&pi, sizeof(pi));
 
-	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\dll_installer.exe 876 TEST");
 	//创建一个新进程  
 	if (CreateProcess(
 		NULL,   //  指向一个NULL结尾的、用来指定可执行模块的宽字节字符串  

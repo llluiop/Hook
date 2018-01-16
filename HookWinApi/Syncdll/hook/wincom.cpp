@@ -13,6 +13,7 @@ HRESULT WinComHook::MyShow(IFileDialog * pIFileDialog, HWND hwndOwner)
 		reinterpret_cast<void**>(&pCustom));
 	if (SUCCEEDED(hr))
 	{
+		MessageBox(hwndOwner, L"加密文件不允许此操作", L"文件防泄漏", NULL);
 		return S_FALSE;
 	}
 
@@ -88,6 +89,9 @@ bool WinComHook::HookSaveFileAs()
 
 	if (!SUCCEEDED(hr))
 	{
+#ifdef _DEBUG
+		MessageBox(0,L"CoCreateInstance failed!",0,0);
+#endif
 		return false;
 	}
 

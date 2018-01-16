@@ -34,6 +34,7 @@ bool WinApiHook::HookCreateFile()
 	BOOL cw = Mhook_SetHook((PVOID*)&create_file_w_, MyCreateFileW);
 	if (ca == FALSE || cw == FALSE)
 	{
+		OutputDebugString(L"HookCreateFile failed!");
 		return false;
 	}
 
@@ -71,6 +72,7 @@ bool WinApiHook::HookSaveFileAs()
 	BOOL gw = Mhook_SetHook((PVOID*)&get_save_file_name_w_, MyGetSaveFileNameW);
 	if (ga == FALSE || gw == FALSE)
 	{
+		OutputDebugString(L"HookSaveFileAs failed!");
 		return false;
 	}
 
@@ -148,11 +150,13 @@ HANDLE WinApiHook::MyCreateFileW(
 
 BOOL WinApiHook::MyGetSaveFileNameA(LPOPENFILENAME lpofn)
 {
+	OutputDebugString(L"MyGetSaveFileNameA return!");
 	return FALSE;
 }
 
 BOOL WinApiHook::MyGetSaveFileNameW(LPOPENFILENAME lpofn)
 {
+	OutputDebugString(L"MyGetSaveFileNameW return!");
 	return FALSE;
 }
 
@@ -168,40 +172,41 @@ HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
 		IDataObject* src = (IDataObject*)GlobalLock(hMem);
 		return nullptr;
 	}
-	else
-	{
-		return set_clipboard_data_(uFormat, hMem);
-	}
+
 	if (uFormat == 49171)
 	{
+
 	}
-	size_t size = GlobalSize(hMem);
-	if (size > len_limit_copy)
+
+	//size_t size = GlobalSize(hMem);
+	//if (size > len_limit_copy)
 	{
 		if (uFormat == CF_TEXT)
 		{
-			char limit[len_limit_copy] = { 0 };
 			char* src = (char*)GlobalLock(hMem);
-			if (src != nullptr)
+			int len = strlen(src);
+			if (src != nullptr && len > len_limit_copy)
 			{
-				memcpy(limit, src, len_limit_copy);
-				limit[len_limit_copy - 1] = 0;
-				memset(src, 0, size);
-				memcpy(src, limit, len_limit_copy);
+				for (int i = len_limit_copy ; i < len; i++)
+				{
+					src[i] = 0;
+				}
+
 				GlobalUnlock(hMem);
 			}
 
 		}
 		else if (uFormat == CF_UNICODETEXT)
 		{
-			wchar_t limit[len_limit_copy] = { 0 };
 			wchar_t* src = (wchar_t*)GlobalLock(hMem);
-			if (src != nullptr)
+			int len = wcslen(src);
+
+			if (src != nullptr && len > len_limit_copy)
 			{
-				wmemcpy(limit, src, len_limit_copy);
-				limit[len_limit_copy - 1] = 0;
-				wmemset(src, 0, size);
-				wmemcpy(src, limit, len_limit_copy);
+				for (int i = len_limit_copy; i < len; i++)
+				{
+					src[i] = 0;
+				}
 				GlobalUnlock(hMem);
 			}
 		}
