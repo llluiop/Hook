@@ -240,3 +240,14 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/HookWinApi/dll_installer/Static_Debug
+/HookWinApi/dll_installer/Test
+/HookWinApi/dll_loader/static
+/HookWinApi/dll_loader/Static_Debug
+/HookWinApi/injector/static
+/HookWinApi/injector/Static_Debug
+/HookWinApi/Static_Debug
+/HookWinApi/Syncdll/static
+/HookWinApi/Syncdll/Static_Debug
+/HookWinApi/Syncdll/Test
+/HookWinApi/Test

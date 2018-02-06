@@ -4,13 +4,19 @@
 
 WinApiHook::_CreateFileA WinApiHook::create_file_a_ = nullptr;
 WinApiHook::_CreateFileW WinApiHook::create_file_w_ = nullptr;
+
 WinApiHook::_GetSaveFileNameA WinApiHook::get_save_file_name_a_ = nullptr;
 WinApiHook::_GetSaveFileNameW WinApiHook::get_save_file_name_w_ = nullptr;
+
 WinApiHook::_SetClipboardData WinApiHook::set_clipboard_data_ = nullptr;
+WinApiHook::_GetClipboardData WinApiHook::get_clipboard_data_ = nullptr;
+WinApiHook::_OleSetClipboard WinApiHook::set_ole_clipboard_ = nullptr;
+WinApiHook::_OleGetClipboard WinApiHook::get_ole_clipboard_ = nullptr;
 
 HMODULE WinApiHook::kernel32_ = nullptr;
 HMODULE WinApiHook::comdlg_ = nullptr;
 HMODULE WinApiHook::user32_ = nullptr;
+HMODULE WinApiHook::ole32_ = nullptr;
 
 const int len_limit_copy = 2;
 
@@ -49,7 +55,8 @@ bool WinApiHook::UnHookCreateFile()
 	if (create_file_w_)
 		Mhook_Unhook((PVOID*)&create_file_w_);
 
-	return !!FreeLibrary(kernel32_);
+	FreeLibrary(kernel32_);
+	return !(kernel32_ = nullptr);
 }
 
 bool WinApiHook::HookSaveFileAs()
@@ -87,7 +94,9 @@ bool WinApiHook::UnHookSaveFileAs()
 	if (get_save_file_name_w_)
 		Mhook_Unhook((PVOID*)&get_save_file_name_w_);
 
-	return !!FreeLibrary(comdlg_);
+
+	FreeLibrary(comdlg_);
+	return !(comdlg_ = nullptr);
 }
 
 bool WinApiHook::HookSetClipboardData()
@@ -113,7 +122,95 @@ bool WinApiHook::UnHookSetClipboardData()
 	{
 		Mhook_Unhook((PVOID*)&set_clipboard_data_);
 	}
-	return !!FreeLibrary(user32_);
+
+	FreeLibrary(user32_);
+	return !(user32_ = nullptr);
+}
+
+bool WinApiHook::HookGetClipboardData()
+{
+	user32_ = LoadLibrary(L"user32.dll");
+	if (user32_ == nullptr)
+	{
+		return false;
+	}
+
+	get_clipboard_data_ = (_GetClipboardData)GetProcAddress(user32_, "GetClipboardData");
+	if (get_clipboard_data_ == nullptr)
+	{
+		return false;
+	}
+
+	return !!Mhook_SetHook((PVOID*)&get_clipboard_data_, MyGetClipboardData);
+}
+
+bool WinApiHook::UnHookGetClipboardData()
+{
+	if (get_clipboard_data_)
+	{
+		Mhook_Unhook((PVOID*)&get_clipboard_data_);
+	}
+
+	FreeLibrary(user32_);
+	return !(user32_ = nullptr);
+}
+
+bool WinApiHook::HookOleSetClipboard()
+{
+	ole32_ = LoadLibrary(L"ole32.dll");
+	if (ole32_ == nullptr)
+	{
+		return false;
+	}
+
+	set_ole_clipboard_ = (_OleSetClipboard)GetProcAddress(ole32_, "OleSetClipboard");
+	if (set_ole_clipboard_ == nullptr)
+	{
+		return false;
+	}
+
+	return !!Mhook_SetHook((PVOID*)&set_ole_clipboard_, MyOleSetClipboard);
+}
+
+bool WinApiHook::UnHookOleSetClipboard()
+{
+	if (set_ole_clipboard_)
+	{
+		Mhook_Unhook((PVOID*)&set_ole_clipboard_);
+	}
+
+	FreeLibrary(ole32_);
+
+	return !(ole32_ = nullptr);
+}
+
+bool WinApiHook::HookOleGetClipboard()
+{
+	ole32_ = LoadLibrary(L"ole32.dll");
+	if (ole32_ == nullptr)
+	{
+		return false;
+	}
+
+	get_ole_clipboard_ = (_OleGetClipboard)GetProcAddress(ole32_, "OleGetClipboard");
+	if (get_ole_clipboard_ == nullptr)
+	{
+		return false;
+	}
+
+	return !!Mhook_SetHook((PVOID*)&get_ole_clipboard_, MyOleGetClipboard);
+}
+
+bool WinApiHook::UnHookOleGetClipboard()
+{
+	if (get_ole_clipboard_)
+	{
+		Mhook_Unhook((PVOID*)&get_ole_clipboard_);
+	}
+
+	FreeLibrary(ole32_);
+
+	return !(ole32_ = nullptr);
 }
 
 HANDLE WinApiHook::MyCreateFileA(
@@ -170,7 +267,7 @@ HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
 	if (uFormat == 49161)
 	{
 		IDataObject* src = (IDataObject*)GlobalLock(hMem);
-		return nullptr;
+		//return nullptr;
 	}
 
 	if (uFormat == 49171)
@@ -192,8 +289,8 @@ HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
 					src[i] = 0;
 				}
 
-				GlobalUnlock(hMem);
 			}
+			GlobalUnlock(hMem);
 
 		}
 		else if (uFormat == CF_UNICODETEXT)
@@ -207,8 +304,9 @@ HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
 				{
 					src[i] = 0;
 				}
-				GlobalUnlock(hMem);
 			}
+			GlobalUnlock(hMem);
+
 		}
 		else if (uFormat == CF_OEMTEXT)
 		{
@@ -217,4 +315,98 @@ HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
 	}
 
 	return set_clipboard_data_(uFormat, hMem);;
+}
+
+HANDLE WINAPI WinApiHook::MyGetClipboardData(_In_ UINT uFormat)
+{
+	return get_clipboard_data_(uFormat);
+}
+
+HRESULT WinApiHook::MyOleSetClipboard(LPDATAOBJECT pDataObj)
+{
+	{
+		FORMATETC formatetcIn{ CF_TEXT , nullptr, 1, -1, 1 };
+		STGMEDIUM medium;
+		if (S_OK == pDataObj->GetData(&formatetcIn, &medium))
+		{
+			char* src = (char*)GlobalLock(medium.hGlobal);
+			int len = strlen(src);
+			if (src != nullptr && len > len_limit_copy)
+			{
+				for (int i = len_limit_copy; i < len; i++)
+				{
+					src[i] = 0;
+				}
+
+			}
+			GlobalUnlock(medium.hGlobal);
+		}
+	}
+
+	{
+		FORMATETC formatetcIn{ CF_UNICODETEXT , nullptr, 1, -1, 1 };
+		STGMEDIUM medium;
+		if (S_OK == pDataObj->GetData(&formatetcIn, &medium))
+		{
+			wchar_t* src = (wchar_t*)GlobalLock(medium.hGlobal);
+			int len = wcslen(src);
+			if (src != nullptr && len > len_limit_copy)
+			{
+				for (int i = len_limit_copy; i < len; i++)
+				{
+					src[i] = 0;
+				}
+
+			}
+			GlobalUnlock(medium.hGlobal);
+		}
+	}
+
+
+	return set_ole_clipboard_(pDataObj);
+}
+
+HRESULT WinApiHook::MyOleGetClipboard(LPDATAOBJECT * ppDataObj)
+{
+	HRESULT hr = get_ole_clipboard_(ppDataObj);
+
+	{
+		FORMATETC formatetcIn{ CF_TEXT , nullptr, 1, -1, 1 };
+		STGMEDIUM medium;
+		if (S_OK == (*ppDataObj)->GetData(&formatetcIn, &medium))
+		{
+			char* src = (char*)GlobalLock(medium.hGlobal);
+			int len = strlen(src);
+			if (src != nullptr && len > len_limit_copy)
+			{
+				for (int i = len_limit_copy; i < len; i++)
+				{
+					src[i] = 0;
+				}
+
+			}
+			GlobalUnlock(medium.hGlobal);
+		}
+	}
+
+	{
+		FORMATETC formatetcIn{ CF_UNICODETEXT , nullptr, 1, -1, 1 };
+		STGMEDIUM medium;
+		if (S_OK == (*ppDataObj)->GetData(&formatetcIn, &medium))
+		{
+			wchar_t* src = (wchar_t*)GlobalLock(medium.hGlobal);
+			int len = wcslen(src);
+			if (src != nullptr && len > len_limit_copy)
+			{
+				for (int i = len_limit_copy; i < len; i++)
+				{
+					src[i] = 0;
+				}
+
+			}
+			GlobalUnlock(medium.hGlobal);
+		}
+	}
+
+	return hr;
 }

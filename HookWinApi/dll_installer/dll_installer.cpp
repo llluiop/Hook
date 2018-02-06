@@ -28,6 +28,7 @@ std::string get_path()
 
 int main(int argc, char* argv[])
 {
+#ifndef _TEST
 	if (argc <= 2 || argv[1] == nullptr)
 	{
 		return -1;
@@ -37,15 +38,19 @@ int main(int argc, char* argv[])
 	DWORD target_process_id = atoi(argv[1]);
 	std::string target_process_name(argv[2]);
 
-#ifdef _TEST
-	GetWindowThreadProcessId(FindWindowA("OpusApp", "ÐÂ½¨ Microsoft Word ÎÄµµ.docx - Word"), &target_process_id);
-	target_process_id = 10572;
+#else
+	DWORD target_process_id = 0;
+	GetWindowThreadProcessId(FindWindowA("OpusApp", "1.docx - Word"), &target_process_id);
+	//target_process_id = 10572;
 	//std::cin >> target_process;
 #endif // 
 
 	auto dll_path = get_path();
 	if (!InstallHook(target_process_id, dll_path.c_str()))
+	{
+		MessageBoxA(0, "install hook failed", dll_path.c_str(), 0);
 		return false;
+	}
 
     WaitForDllLoaded(target_process_id);
 

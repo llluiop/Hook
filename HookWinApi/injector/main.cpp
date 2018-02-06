@@ -45,7 +45,7 @@ int main()
 	derive2* d2 = static_cast<derive2*>(b);
 
 #ifdef _WIN64
-	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\x64\\Debug\\dll_installer.exe 8376 TEST");
+	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\x64\\Debug\\dll_installer.exe 4492 TEST");
 #else
 	std::string path("C:\\Users\\liuyu\\Source\\Repos\\Hook\\HookWinApi\\Debug\\dll_installer.exe 7048 TEST");
 #endif

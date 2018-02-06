@@ -80,7 +80,12 @@ vector<DWORD> GetThreadIDByProcssID(DWORD pid)
 LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	std::call_once(g_flag, [] {
-		::LoadLibraryA(g_dll);
+		auto hwnd = ::LoadLibraryA(g_dll);
+		auto hook = GetProcAddress(hwnd, "hook");
+		if (hook)
+		{
+			hook();
+		}
 		OpenEventA(EVENT_MODIFY_STATE, FALSE, g_sig);
 
 	});
@@ -98,6 +103,7 @@ bool MakeEventName(DWORD pid, const char* path)
 
 bool InstallHook(DWORD pid, const char* target_dll)
 {
+	//MessageBoxA(0, 0, 0, 0);
 	strncpy_s(g_dll, target_dll, MAX_PATH);
 
 	MakeEventName(pid, target_dll);
@@ -127,6 +133,11 @@ bool InstallHook(DWORD pid, const char* target_dll)
 		if (g_hook != nullptr)
 		{
 			break;
+		}
+		else
+		{
+			DWORD err = GetLastError();
+			err++;
 		}
 	}
 	

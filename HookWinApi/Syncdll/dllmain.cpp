@@ -14,9 +14,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_PROCESS_ATTACH:
 	     //https://msdn.microsoft.com/en-us/library/windows/desktop/dn633971(v=vs.85).aspx
 		//OutputDebugString(L"process attach");
-		std::async(std::launch::async, [] {
-			hook();
-		});
+		//std::async(std::launch::async, [] {
+		//	hook();
+		//});
 		break;
 	case DLL_THREAD_ATTACH:
 		OutputDebugString(L"thread attach");
