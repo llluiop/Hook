@@ -69,12 +69,12 @@ bool pure(const T addr)
 }
 bool WinComHook::HookSaveFileAs()
 {
-	HRESULT hr = CoInitialize(nullptr);
-	if (hr != S_OK)
+	if (!SUCCEEDED(CoInitialize(nullptr)))
 	{
 		return false;
 	}
 
+	HRESULT hr;
 	if (!pure(CoCreateInstance))
 	{
 		hr = PureCoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
