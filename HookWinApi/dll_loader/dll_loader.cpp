@@ -103,7 +103,6 @@ bool MakeEventName(DWORD pid, const char* path)
 
 bool InstallHook(DWORD pid, const char* target_dll)
 {
-	//MessageBoxA(0, 0, 0, 0);
 	strncpy_s(g_dll, target_dll, MAX_PATH);
 
 	MakeEventName(pid, target_dll);
