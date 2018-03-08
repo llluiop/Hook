@@ -39,8 +39,8 @@ int main(int argc, char* argv[])
 	std::string target_process_name(argv[2]);
 
 #else
-	DWORD target_process_id = 0;
-	GetWindowThreadProcessId(FindWindowA("OpusApp", "1.docx - Word"), &target_process_id);
+	DWORD target_process_id = 11432;
+	//GetWindowThreadProcessId(FindWindowA("OpusApp", "1.docx - Word"), &target_process_id);
 	//target_process_id = 10572;
 	//std::cin >> target_process;
 #endif // 

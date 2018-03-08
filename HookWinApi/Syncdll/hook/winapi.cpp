@@ -324,6 +324,11 @@ HANDLE WINAPI WinApiHook::MyGetClipboardData(_In_ UINT uFormat)
 
 HRESULT WinApiHook::MyOleSetClipboard(LPDATAOBJECT pDataObj)
 {
+	return S_FALSE;
+
+	if (pDataObj == nullptr)
+		return set_ole_clipboard_(pDataObj);
+
 	{
 		FORMATETC formatetcIn{ CF_TEXT , nullptr, 1, -1, 1 };
 		STGMEDIUM medium;
@@ -369,6 +374,9 @@ HRESULT WinApiHook::MyOleSetClipboard(LPDATAOBJECT pDataObj)
 HRESULT WinApiHook::MyOleGetClipboard(LPDATAOBJECT * ppDataObj)
 {
 	HRESULT hr = get_ole_clipboard_(ppDataObj);
+
+	if (ppDataObj == nullptr || *ppDataObj == nullptr)
+		return hr;
 
 	{
 		FORMATETC formatetcIn{ CF_TEXT , nullptr, 1, -1, 1 };
