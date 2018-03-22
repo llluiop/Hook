@@ -1,9 +1,11 @@
 #include "hook.h"
 #include "winapi.h"
 #include "wincom.h"
+#include "../sweeper/sweeper.h"
 
 void hook()
 {
+	Sweeper::Instance()->Start();
 	WinApiHook::HookSaveFileAs();
 	WinComHook::HookSaveFileAs();
 	WinApiHook::HookSetClipboardData();
@@ -20,4 +22,5 @@ void unhook()
 	WinApiHook::UnHookGetClipboardData();
 	WinApiHook::UnHookOleSetClipboard();
 	WinApiHook::UnHookOleGetClipboard();
+	Sweeper::Instance()->Stop();
 }

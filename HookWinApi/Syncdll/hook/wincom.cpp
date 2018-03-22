@@ -1,7 +1,9 @@
 #include "wincom.h"
 #include "mhook-lib/mhook.h"
 #include "asm/cocreateinstance.h"
+#include "../sweeper/sweeper.h"
 #include <typeinfo>
+
 
 IFileDialog* WinComHook::iFileDialog_ = nullptr;
 WinComHook::_Show WinComHook::show_ = nullptr;
@@ -14,7 +16,8 @@ HRESULT WinComHook::MyShow(IFileDialog * pIFileDialog, HWND hwndOwner)
 	if (SUCCEEDED(hr))
 	{
 		MessageBox(hwndOwner, L"加密文件不允许此操作", L"文件防泄漏", NULL);
-		return S_FALSE;
+		Sweeper::Instance()->SaveAsTriggered();
+		return S_OK;
 	}
 
 	return show_(pIFileDialog, hwndOwner);
