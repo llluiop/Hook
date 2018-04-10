@@ -324,7 +324,7 @@ HANDLE WINAPI WinApiHook::MyGetClipboardData(_In_ UINT uFormat)
 
 HRESULT WinApiHook::MyOleSetClipboard(LPDATAOBJECT pDataObj)
 {
-	return S_FALSE;
+	return S_OK;
 
 	if (pDataObj == nullptr)
 		return set_ole_clipboard_(pDataObj);
