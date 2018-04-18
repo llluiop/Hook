@@ -20,6 +20,18 @@ HMODULE WinApiHook::ole32_ = nullptr;
 
 const int len_limit_copy = 2;
 
+HHOOK hook = nullptr;
+LRESULT CALLBACK CBTProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HCBT_ACTIVATE)
+	{
+		RECT rect;
+		GetWindowRect(GetDesktopWindow(), &rect);
+		MoveWindow((HWND)wParam, (rect.right - rect.left) / 2, (rect.bottom - rect.top) / 2, 175, 163, TRUE);
+	}
+	return CallNextHookEx(hook, nCode, wParam, lParam);
+}
+
 bool WinApiHook::HookCreateFile()
 {
 	kernel32_ = LoadLibrary(L"Kernel32.dll");
@@ -247,13 +259,29 @@ HANDLE WinApiHook::MyCreateFileW(
 
 BOOL WinApiHook::MyGetSaveFileNameA(LPOPENFILENAME lpofn)
 {
-	OutputDebugString(L"MyGetSaveFileNameA return!");
+	if (lpofn == nullptr)
+	{
+		return TRUE;
+	}
+
+	hook = SetWindowsHookEx(WH_CBT, CBTProc, NULL, GetCurrentThreadId());
+	::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作", L"文件防泄漏", NULL);
+	UnhookWindowsHookEx(hook);
+
 	return FALSE;
 }
 
 BOOL WinApiHook::MyGetSaveFileNameW(LPOPENFILENAME lpofn)
 {
-	OutputDebugString(L"MyGetSaveFileNameW return!");
+	if (lpofn == nullptr)
+	{
+		return TRUE;
+	}
+
+	hook = SetWindowsHookEx(WH_CBT, CBTProc, NULL, GetCurrentThreadId());
+	::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作", L"文件防泄漏", NULL);
+	UnhookWindowsHookEx(hook);
+
 	return FALSE;
 }
 
