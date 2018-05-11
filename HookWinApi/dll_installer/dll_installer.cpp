@@ -50,7 +50,12 @@ int main(int argc, char* argv[])
 	auto dll_path = get_path();
 	if (!InstallHook(target_process_id, dll_path.c_str()))
 	{
-		MessageBoxA(0, "install hook failed", dll_path.c_str(), 0);
+		OutputDebugStringA(dll_path.c_str());
+
+#ifndef _TEST
+		OutputDebugStringA(target_process_name.c_str());
+#endif
+		//MessageBoxA(0, "install hook failed", dll_path.c_str(), 0);
 		return false;
 	}
 

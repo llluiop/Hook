@@ -28,6 +28,9 @@
     <Filter Include="sweeper">
       <UniqueIdentifier>{25e6efb1-f5a7-41b9-b2f5-8e4ddec91866}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tip">
+      <UniqueIdentifier>{f80c94f7-c43f-4568-908a-ded030f13e0f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -75,6 +78,9 @@
     <ClInclude Include="sweeper\office.h">
       <Filter>sweeper</Filter>
     </ClInclude>
+    <ClInclude Include="tip\tip.h">
+      <Filter>tip</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -109,6 +115,9 @@
     </ClCompile>
     <ClCompile Include="sweeper\sweeper.cpp">
       <Filter>sweeper</Filter>
+    </ClCompile>
+    <ClCompile Include="tip\tip.cpp">
+      <Filter>tip</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

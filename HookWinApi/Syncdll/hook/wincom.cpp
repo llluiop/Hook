@@ -2,6 +2,7 @@
 #include "mhook-lib/mhook.h"
 #include "asm/cocreateinstance.h"
 #include "../sweeper/sweeper.h"
+#include "../tip/tip.h"
 #include <typeinfo>
 
 
@@ -15,7 +16,7 @@ HRESULT WinComHook::MyShow(IFileDialog * pIFileDialog, HWND hwndOwner)
 		reinterpret_cast<void**>(&pCustom));
 	if (SUCCEEDED(hr))
 	{
-		MessageBox(hwndOwner, L"加密文件不允许此操作", L"文件防泄漏", NULL);
+		Tip::Instance()->Show(Tip::FROM_COM);
 		Sweeper::Instance()->SaveAsTriggered();
 		return S_OK;
 	}

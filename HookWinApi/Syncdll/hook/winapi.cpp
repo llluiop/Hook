@@ -1,6 +1,8 @@
 #include "winapi.h"
 #include "mhook-lib/mhook.h"
 #include <wchar.h>
+#include <string>
+#include "../tip/tip.h"
 
 WinApiHook::_CreateFileA WinApiHook::create_file_a_ = nullptr;
 WinApiHook::_CreateFileW WinApiHook::create_file_w_ = nullptr;
@@ -27,7 +29,12 @@ LRESULT CALLBACK CBTProc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 		RECT rect;
 		GetWindowRect(GetDesktopWindow(), &rect);
-		MoveWindow((HWND)wParam, (rect.right - rect.left) / 2, (rect.bottom - rect.top) / 2, 175, 163, TRUE);
+		auto hwnd = (HWND)wParam;
+
+		char title[MAX_PATH] = { 0 };
+		GetWindowTextA(hwnd, title, MAX_PATH);
+		if (strcmp(title, "文件防泄漏") == 0)
+			MoveWindow((HWND)wParam, (rect.right - rect.left) / 2, (rect.bottom - rect.top) / 2, 175, 163, TRUE);
 	}
 	return CallNextHookEx(hook, nCode, wParam, lParam);
 }
@@ -259,30 +266,30 @@ HANDLE WinApiHook::MyCreateFileW(
 
 BOOL WinApiHook::MyGetSaveFileNameA(LPOPENFILENAME lpofn)
 {
-	if (lpofn == nullptr)
-	{
-		return TRUE;
-	}
-
 	hook = SetWindowsHookEx(WH_CBT, CBTProc, NULL, GetCurrentThreadId());
-	::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作", L"文件防泄漏", NULL);
+	Tip::Instance()->Show(Tip::FROM_API);
+
 	UnhookWindowsHookEx(hook);
 
-	return FALSE;
+	char szFileFullPath[MAX_PATH], szProcessName[MAX_PATH];
+	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH);//获取文件路径 
+	std::string name(szFileFullPath, MAX_PATH);
+
+	return (name.find("wps.exe") == std::string::npos); //wps false
 }
 
 BOOL WinApiHook::MyGetSaveFileNameW(LPOPENFILENAME lpofn)
 {
-	if (lpofn == nullptr)
-	{
-		return TRUE;
-	}
-
 	hook = SetWindowsHookEx(WH_CBT, CBTProc, NULL, GetCurrentThreadId());
-	::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作", L"文件防泄漏", NULL);
+	Tip::Instance()->Show(Tip::FROM_API);
+
 	UnhookWindowsHookEx(hook);
 
-	return FALSE;
+	char szFileFullPath[MAX_PATH], szProcessName[MAX_PATH];
+	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH);//获取文件路径 
+	std::string name(szFileFullPath, MAX_PATH);
+
+	return (name.find("wps.exe") == std::string::npos); //wps false
 }
 
 HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
@@ -291,17 +298,7 @@ HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
 	{
 		return set_clipboard_data_(uFormat, hMem);
 	}
-	//office word format
-	if (uFormat == 49161)
-	{
-		IDataObject* src = (IDataObject*)GlobalLock(hMem);
-		//return nullptr;
-	}
 
-	if (uFormat == 49171)
-	{
-
-	}
 
 	//size_t size = GlobalSize(hMem);
 	//if (size > len_limit_copy)
@@ -345,7 +342,7 @@ HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
 	return set_clipboard_data_(uFormat, hMem);;
 }
 
-HANDLE WINAPI WinApiHook::MyGetClipboardData(_In_ UINT uFormat)
+HANDLE WinApiHook::MyGetClipboardData(_In_ UINT uFormat)
 {
 	return get_clipboard_data_(uFormat);
 }
