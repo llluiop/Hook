@@ -271,11 +271,13 @@ BOOL WinApiHook::MyGetSaveFileNameA(LPOPENFILENAME lpofn)
 
 	UnhookWindowsHookEx(hook);
 
-	char szFileFullPath[MAX_PATH], szProcessName[MAX_PATH];
+	char szFileFullPath[MAX_PATH] = {0};
 	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH);//获取文件路径 
 	std::string name(szFileFullPath, MAX_PATH);
 
-	return (name.find("wps.exe") == std::string::npos); //wps false
+	return (name.find("wps.exe") == std::string::npos &&
+		name.find("et.exe") == std::string::npos &&
+		name.find("wpp.exe") == std::string::npos); //wps false
 }
 
 BOOL WinApiHook::MyGetSaveFileNameW(LPOPENFILENAME lpofn)
@@ -285,11 +287,13 @@ BOOL WinApiHook::MyGetSaveFileNameW(LPOPENFILENAME lpofn)
 
 	UnhookWindowsHookEx(hook);
 
-	char szFileFullPath[MAX_PATH], szProcessName[MAX_PATH];
+	char szFileFullPath[MAX_PATH] = {0};
 	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH);//获取文件路径 
 	std::string name(szFileFullPath, MAX_PATH);
 
-	return (name.find("wps.exe") == std::string::npos); //wps false
+	return (name.find("wps.exe") == std::string::npos &&
+		name.find("et.exe") == std::string::npos &&
+		name.find("wpp.exe") == std::string::npos); //wps false
 }
 
 HANDLE WinApiHook::MySetClipboardData(UINT uFormat, HANDLE hMem)
@@ -349,51 +353,14 @@ HANDLE WinApiHook::MyGetClipboardData(_In_ UINT uFormat)
 
 HRESULT WinApiHook::MyOleSetClipboard(LPDATAOBJECT pDataObj)
 {
-	return S_OK;
+	char szFileFullPath[MAX_PATH] = { 0 };
+	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH);//获取文件路径 
+	std::string name(szFileFullPath, MAX_PATH);
 
-	if (pDataObj == nullptr)
-		return set_ole_clipboard_(pDataObj);
-
-	{
-		FORMATETC formatetcIn{ CF_TEXT , nullptr, 1, -1, 1 };
-		STGMEDIUM medium;
-		if (S_OK == pDataObj->GetData(&formatetcIn, &medium))
-		{
-			char* src = (char*)GlobalLock(medium.hGlobal);
-			int len = strlen(src);
-			if (src != nullptr && len > len_limit_copy)
-			{
-				for (int i = len_limit_copy; i < len; i++)
-				{
-					src[i] = 0;
-				}
-
-			}
-			GlobalUnlock(medium.hGlobal);
-		}
-	}
-
-	{
-		FORMATETC formatetcIn{ CF_UNICODETEXT , nullptr, 1, -1, 1 };
-		STGMEDIUM medium;
-		if (S_OK == pDataObj->GetData(&formatetcIn, &medium))
-		{
-			wchar_t* src = (wchar_t*)GlobalLock(medium.hGlobal);
-			int len = wcslen(src);
-			if (src != nullptr && len > len_limit_copy)
-			{
-				for (int i = len_limit_copy; i < len; i++)
-				{
-					src[i] = 0;
-				}
-
-			}
-			GlobalUnlock(medium.hGlobal);
-		}
-	}
-
-
-	return set_ole_clipboard_(pDataObj);
+	if (name.find("et.exe") == std::string::npos) //wps false
+		return S_OK;
+	else
+		return set_ole_clipboard_(nullptr);
 }
 
 HRESULT WinApiHook::MyOleGetClipboard(LPDATAOBJECT * ppDataObj)

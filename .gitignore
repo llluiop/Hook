@@ -251,3 +251,7 @@ ModelManifest.xml
 /HookWinApi/Syncdll/Static_Debug
 /HookWinApi/Syncdll/Test
 /HookWinApi/Test
+/HookWinApi/dll_installer/Static_Release/dll_installer.tlog
+/HookWinApi/dll_loader/Static_Release/dll_loader.tlog
+/HookWinApi/injector/Static_Release/injector.tlog
+/HookWinApi/Syncdll/Static_Release/sync_dll.tlog

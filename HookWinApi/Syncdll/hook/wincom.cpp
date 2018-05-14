@@ -57,20 +57,21 @@ PureCoCreateInstance(
 			jmp  eax
 		}
 }
-#endif
+
 
 template<class T>
 bool pure(const T addr)
 {
-#ifdef _WIN64
 
-#else
 	auto code = (char)*(int*)addr;
 	return code == 0x8b; //8bff mov edi, edi
-#endif
+
 
 	return true;
 }
+#endif
+
+
 bool WinComHook::HookSaveFileAs()
 {
 	if (!SUCCEEDED(CoInitialize(nullptr)))
@@ -79,6 +80,8 @@ bool WinComHook::HookSaveFileAs()
 	}
 
 	HRESULT hr;
+
+#ifndef _WIN64
 	if (!pure(CoCreateInstance))
 	{
 		hr = PureCoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
@@ -90,6 +93,10 @@ bool WinComHook::HookSaveFileAs()
 		hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
 			IID_PPV_ARGS(&iFileDialog_));
 	}
+#else
+	hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&iFileDialog_));
+#endif
 
 	if (!SUCCEEDED(hr))
 	{
