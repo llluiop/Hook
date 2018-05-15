@@ -22,22 +22,6 @@ HMODULE WinApiHook::ole32_ = nullptr;
 
 const int len_limit_copy = 2;
 
-HHOOK hook = nullptr;
-LRESULT CALLBACK CBTProc(int nCode, WPARAM wParam, LPARAM lParam)
-{
-	if (nCode == HCBT_ACTIVATE)
-	{
-		RECT rect;
-		GetWindowRect(GetDesktopWindow(), &rect);
-		auto hwnd = (HWND)wParam;
-
-		char title[MAX_PATH] = { 0 };
-		GetWindowTextA(hwnd, title, MAX_PATH);
-		if (strcmp(title, "文件防泄漏") == 0)
-			MoveWindow((HWND)wParam, (rect.right - rect.left) / 2, (rect.bottom - rect.top) / 2, 175, 163, TRUE);
-	}
-	return CallNextHookEx(hook, nCode, wParam, lParam);
-}
 
 bool WinApiHook::HookCreateFile()
 {
@@ -266,10 +250,7 @@ HANDLE WinApiHook::MyCreateFileW(
 
 BOOL WinApiHook::MyGetSaveFileNameA(LPOPENFILENAME lpofn)
 {
-	hook = SetWindowsHookEx(WH_CBT, CBTProc, NULL, GetCurrentThreadId());
 	Tip::Instance()->Show(Tip::FROM_API);
-
-	UnhookWindowsHookEx(hook);
 
 	char szFileFullPath[MAX_PATH] = {0};
 	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH);//获取文件路径 
@@ -282,10 +263,7 @@ BOOL WinApiHook::MyGetSaveFileNameA(LPOPENFILENAME lpofn)
 
 BOOL WinApiHook::MyGetSaveFileNameW(LPOPENFILENAME lpofn)
 {
-	hook = SetWindowsHookEx(WH_CBT, CBTProc, NULL, GetCurrentThreadId());
 	Tip::Instance()->Show(Tip::FROM_API);
-
-	UnhookWindowsHookEx(hook);
 
 	char szFileFullPath[MAX_PATH] = {0};
 	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH);//获取文件路径 

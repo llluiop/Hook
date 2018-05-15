@@ -19,29 +19,7 @@ public:
 		FROM_API,
 	};
 
-	void Show(const Type& type)
-	{
-		if (type_ == UNKNOWN)
-		{
-			::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作", L"文件防泄漏", NULL);
-			type_ = type;
-
-		}
-		else
-		{
-			if (type_ != type)
-			{
-				OutputDebugStringA("type changed, not show");
-			}
-			else
-			{
-				::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作", L"文件防泄漏", NULL);
-				type_ = type;
-
-			}
-		}
-		
-	}
+	void Show(const Type& type);
 
 private:
 	Tip() {}
