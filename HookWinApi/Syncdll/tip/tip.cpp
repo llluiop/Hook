@@ -27,7 +27,7 @@ void Tip::Show(const Type& type)
 
 	if (type_ == UNKNOWN)
 	{
-		::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作                                    ", L"文件防泄漏", MB_OK | MB_ICONWARNING);
+		::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作                        ", L"文件防泄漏", MB_OK | MB_ICONWARNING);
 		type_ = type;
 
 	}
@@ -39,7 +39,7 @@ void Tip::Show(const Type& type)
 		}
 		else
 		{
-			::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作                                    ", L"文件防泄漏", MB_OK | MB_ICONWARNING);
+			::MessageBox(GetDesktopWindow(), L"加密文件不允许此操作                       ", L"文件防泄漏", MB_OK | MB_ICONWARNING);
 			type_ = type;
 
 		}
