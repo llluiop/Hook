@@ -1,8 +1,5 @@
 #ifndef __tip_h__
 #define __tip_h__
-
-#include <windows.h>
-
 class Tip
 {
 public:
@@ -22,9 +19,13 @@ public:
 	void Show(const Type& type);
 
 private:
-	Tip() {}
+	Tip();
 
 	Type type_ = UNKNOWN;
+
+private:
+
+
 };
 
 #endif // __tip_h__

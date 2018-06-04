@@ -1,8 +1,9 @@
 #include "winapi.h"
 #include "mhook-lib/mhook.h"
+#include "../tip/tip.h"
+
 #include <wchar.h>
 #include <string>
-#include "../tip/tip.h"
 
 WinApiHook::_CreateFileA WinApiHook::create_file_a_ = nullptr;
 WinApiHook::_CreateFileW WinApiHook::create_file_w_ = nullptr;

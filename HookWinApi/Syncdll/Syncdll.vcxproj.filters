@@ -81,6 +81,12 @@
     <ClInclude Include="tip\tip.h">
       <Filter>tip</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tip\tipDlg.h">
+      <Filter>tip</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -119,10 +125,23 @@
     <ClCompile Include="tip\tip.cpp">
       <Filter>tip</Filter>
     </ClCompile>
+    <ClCompile Include="tip\tipDlg.cpp">
+      <Filter>tip</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="hook\asm\cocreateinstance.asm">
       <Filter>hook\asm</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sync_dll.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="warning.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
